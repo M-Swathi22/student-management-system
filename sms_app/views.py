@@ -1,6 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Student
 from .forms import StudentForm
+from django.db.models import Q
+
+def home_page(request):
+    return render(request, 'home.html')
 
 def add_student(request):
     if request.method == 'POST':
@@ -13,8 +17,19 @@ def add_student(request):
     return render(request, 'add_student.html', {'form': form})
 
 def view_students(request):
+    query = request.GET.get('q')
+    sort_by = request.GET.get('sort')
     students = Student.objects.all()
-    return render(request, 'view_students.html', {'students': students})
+
+    if query:
+        students = students.filter(
+            Q(name__icontains=query) | Q(course__icontains=query)
+        )
+
+    if sort_by:
+        students = students.order_by(sort_by)
+
+    return render(request, 'view_students.html', {'students': students, 'query': query, 'sort_by': sort_by})
 
 def edit_student(request, id):
     student = get_object_or_404(Student, id=id)
